@@ -47,6 +47,7 @@ func Login(c *gin.Context) {
 	var body struct {
 		Username string
 		Password string
+		Role     string
 	}
 
 	if c.Bind(&body) != nil {
@@ -69,8 +70,9 @@ func Login(c *gin.Context) {
 		return
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub": user.ID,
-		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(),
+		"sub":  user.ID,
+		"exp":  time.Now().Add(time.Hour * 24 * 30).Unix(),
+		"role": user.Role,
 	})
 
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))

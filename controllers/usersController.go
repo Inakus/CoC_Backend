@@ -18,6 +18,8 @@ func Signup(c *gin.Context) {
 		Password string
 	}
 
+	dst := "Images/"
+
 	if c.Bind(&body) != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid body"})
 		return
@@ -30,7 +32,24 @@ func Signup(c *gin.Context) {
 		return
 	}
 
-	user := models.User{Username: body.Username, Password: string(hash)}
+	file, err := c.FormFile("file")
+
+	if err != nil {
+		// Handle the case when no file is uploaded or other errors
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to get file"})
+		return
+	}
+
+	// Generate a unique filename for the uploaded file
+	filename := body.Username + "_avatar.png"
+
+	// Save the uploaded file
+	if err := c.SaveUploadedFile(file, dst+filename); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
+		return
+	}
+
+	user := models.User{Username: body.Username, Password: string(hash), Avatar: filename}
 
 	result := initializers.DB.Create(&user)
 
@@ -40,7 +59,6 @@ func Signup(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "User created successfully"})
-
 }
 
 func Login(c *gin.Context) {
